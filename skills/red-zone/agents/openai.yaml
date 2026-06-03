@@ -1,0 +1,7 @@
+interface:
+  display_name: "红区生成"
+  short_description: "替换参考图红色标记区域；普通资产生成白底图，主KV生成方形头图源图"
+  default_prompt: "使用 $red-zone，在参考图红色区域生成蛋糕 icon；如果是主KV，请生成可替换头图的方形KV源图。"
+
+policy:
+  allow_implicit_invocation: true
