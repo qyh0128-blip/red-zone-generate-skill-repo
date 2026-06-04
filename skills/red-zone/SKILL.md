@@ -8,15 +8,32 @@ description: >-
   masks, red outlines, or red placeholder blocks. By default produces a
   reference-image replacement result and a matching 1:1 white-background
   standalone icon or asset. When the user explicitly asks for a 主KV, 主 kv,
-  H5主视觉, 头图, header KV, or hero visual, use Main KV mode to create a 1:1
-  1500 x 1500 replacement-ready KV source image that preserves the KV
-  composition/background instead of a white-background asset, then place that
-  same source image into the red area for the page effect preview.
+  H5主视觉, 头图, header KV, or hero visual, use Main KV mode to output the H5
+  red-area landing/effect preview first, then output the matching 1:1 1500 x
+  1500 replacement-ready KV source image derived from the approved H5 preview.
+  The two delivered images must be the same KV composition, not separate visual
+  proposals.
 ---
 
 # 红区生成
 
 Use this skill when the user provides a reference image containing red marked areas and names the content to generate in those red areas, such as cake icon, gift icon, coin icon, diamond icon, pet avatar, reward item, badge, button icon, task reward asset, or an H5 main KV / hero image.
+
+## Model Requirement
+
+- Generate all images for this skill with **gpt-image2** / **GPT Image 2.0** whenever the image generation interface exposes model selection.
+- If the available tool does not expose model selection, inspect generated metadata when practical. If metadata indicates `gpt-image` `version 2.0`, treat it as satisfying this requirement.
+- If gpt-image2 / GPT Image 2.0 cannot be selected or verified, disclose that limitation before delivery. Do not silently use another model for final outputs.
+
+## Unified Visual Style Standard
+
+All outputs from this skill must follow the red-zone house style unless the user explicitly requests a different style:
+
+- Q-version rounded exaggerated shape language: cute, soft, approachable, with clear playful silhouettes.
+- Soft 3D material quality: lightweight toy/clay/plastic volume, gentle glossy highlights, soft shadows, and clean depth.
+- Bright clean color palette: high saturation but never harsh, vivid and cheerful, with fresh light tones instead of muddy, gray, dull, heavy, old-fashioned, or low-energy colors.
+- Lightweight design: polished, airy, readable at H5 size, visually rich enough for an event UI but not cluttered, over-rendered, dark, dirty, or retro-heavy.
+- Match the reference H5/game UI polish while improving freshness and clarity when the red area is only a placeholder.
 
 ## Mode Selection
 
@@ -36,8 +53,10 @@ Generate two images unless the user explicitly asks for only one.
 
 ### Main KV mode
 
-1. **Red-area replacement result**: preserve the full reference image and replace the red KV/header region with the generated KV. Keep all non-red UI, buttons, text, tabs, characters, panels, and overlays unchanged.
-2. **KV source image**: generate the same KV as a square 1:1 source image, intended and saved as 1500 x 1500 when possible. This image is for replacing the red header/KV area, so it must keep the complete KV composition, background, atmosphere, depth, and visual hierarchy. It must not be a pure white asset and must not be a vertical H5 long page.
+1. **Red-area replacement result / H5 landing preview**: deliver this first. Preserve the full reference image and replace the red KV/header region with the generated KV. Keep all non-red UI, buttons, text, tabs, characters, panels, and overlays unchanged.
+2. **KV source image**: deliver this second. It must be derived from the actual approved KV visible in image 1, shown as a square 1:1 source image, intended and saved as 1500 x 1500 when possible. This image is for replacing the red header/KV area, so it must keep the exact composition, required title text, foreground characters/props, background, atmosphere, depth, and visual hierarchy from the H5 landing preview. It must not be a titleless background plate, a pure white asset, a vertical H5 long page, or a visually drifted redesign.
+
+Main KV mode has a strict two-image delivery contract: do not deliver extra candidate generations, alternates, retries, or unrelated versions. Image 1 is the visual source of truth. If image 2 changes the composition, title style, character count, character poses, props, background, palette, lighting, or focal hierarchy from image 1, discard it and regenerate image 2 from the approved image 1 KV until the delivered two images match.
 
 Respect the user's storage preference when known. If the user prefers not to save files locally, do not copy generated outputs into the workspace unless they explicitly ask to save or download them. Temporary or tool-cache files may be unavoidable; avoid extra local copies.
 
@@ -106,21 +125,34 @@ If the tool output is not exactly 1500 x 1500 and a local file is being saved, r
 
 When the user asks for a 主KV / H5主视觉 / 头图, the second image is not a white-background icon. It is the replacement-ready KV source.
 
+### Consistency Contract
+
+- The H5 landing preview is the source of truth. Generate and approve image 1 first, then inspect the actual KV visible in its red area before creating image 2.
+- The 1:1 KV source must be a faithful square pure-view version of image 1's actual red-area KV: same title treatment, main characters/props, character count, poses, prop relationships, background atmosphere, palette, lighting, perspective, and focal hierarchy.
+- The 1:1 KV source must be a complete usable main KV. It must include every required visible content element from the H5 preview, especially the exact title text when the user specifies one. Never omit, crop away, hide, simplify away, or delete the title, main characters, core props, or other required focal content from the source image.
+- The source image may reconstruct safe margins that are hidden or cropped in the H5 preview, but it must not change into a different poster, scene, character set, typography style, prop set, or layout idea.
+- Do not create image 2 as a fresh thematic generation from the prompt alone. It must be based on the approved image 1 KV. Use the image 1 red-area KV as the visual reference whenever the tool supports image-to-image or edit input. If the tool cannot directly reference image 1, the prompt must explicitly restate the observed image 1 composition and prohibit any visual drift.
+- If text rendering needs local post-compositing for accuracy, apply the exact same final title treatment to both delivered images. A temporary titleless generation may be used only as an internal background layer; it must never be delivered as the 1:1 KV source.
+- If image 1 fails, regenerate image 1. If image 1 passes but image 2 drifts, keep image 1 and regenerate only image 2 from image 1 as the locked reference. Never present mismatched attempts as final output.
+
 ### Required workflow
 
 1. Inspect the reference image and red area. Note the page dimensions, red region bounds, overlaying UI, and likely visible/cropped portion of a square source image.
-2. Generate the **1:1 KV source image first** when practical, with the requested title/theme and the safe-area constraints derived from the reference.
-3. Create the red-area replacement result using the same KV source image and the same placement/crop logic. This keeps image 1 and image 2 compositionally consistent.
-4. If local files are being saved, resize or export the KV source image to exactly 1500 x 1500.
-5. Visually verify the page effect: no red marker remains, no important title/character/focal prop is hidden by UI overlays, and the KV focus feels correct after placement.
+2. Create image 1 first: the red-area replacement result / H5 landing preview. Optimize the KV for the real page safe areas and overlays so the in-page result is the first approved design.
+3. Inspect image 1 and lock its actual red-area KV. Record the title treatment, character count, poses, facial direction, main props, prop placement, foreground/background layers, palette, lighting, depth, decorative elements, and any cropped edges that need square-source reconstruction.
+4. Create image 2 second: the matching square 1:1 KV source image from image 1's locked red-area KV. Treat image 1 as the visual source of truth. Reconstruct only the margins needed for a complete square source; do not redesign, recompose, restyle, or swap elements.
+5. If local files are being saved, resize or export the KV source image to exactly 1500 x 1500.
+6. Visually verify both images as a pair: no red marker remains in the H5 preview, no important title/character/focal prop is hidden by UI overlays, the 1:1 source includes the exact title and all key visible KV content, and image 2 matches image 1 rather than becoming a new idea, incomplete background, or drifted redesign.
+7. Deliver only the two approved images, in this order: H5 landing preview first, 1:1 KV source second.
 
 ### KV source image rules
 
 - Canvas: 1:1 square, intended 1500 x 1500. Never output a vertical H5 long image for the pure-view/source image.
 - Background: keep the full KV atmosphere and composition. Do not use a pure white background.
-- Consistency: image 2 must preserve the composition, visual relationships, mood, depth, and focal hierarchy used in image 1. It may be more polished, but it should not become a different poster.
+- Completeness: the source image must include the exact title text and all required focal content when those appear in the H5 landing preview. It is not acceptable to deliver a titleless background, blank title plaque, cropped-away title, or source image with missing main characters/props.
+- Consistency: image 2 must preserve the composition, title treatment, character count, poses, prop relationships, mood, depth, and focal hierarchy used in image 1. It may include extra uncropped margins, but it must not become a different poster or omit anything essential.
 - Safety: reserve layout-specific safe zones for page overlays. For top H5 header/KV references, this often means keeping the main title/focal group in the upper or upper-middle safe area, leaving lower overlay zones cleaner, and avoiding important content under right-side floating buttons. Adjust these rules based on the actual reference, not a fixed number.
-- Style: soft lightweight 3D, Q-version rounded exaggerated forms, high saturation but not harsh, bright cheerful palette, polished toy/clay/plastic material, clean hierarchy, strong focal point, depth of field, and impactful composition.
+- Style: follow the Unified Visual Style Standard: Q-version rounded exaggerated forms, soft lightweight 3D, high saturation but not harsh, bright clean cheerful palette, polished toy/clay/plastic material, clean hierarchy, strong focal point, depth of field, and impactful but airy composition.
 - Avoid: white studio background, vertical page mockup, extra UI buttons, extra text, watermark, cluttered lower overlay zones, distorted title characters, or source images that cannot be placed back into the red area cleanly.
 
 ## Prompt Template
@@ -143,30 +175,38 @@ Generate the standalone asset from $red-zone using the actual red-area replaceme
 
 ### Main KV mode
 
-For the 1:1 KV source image, fill in `{title}`, `{theme}`, and the reference-specific safe-area notes:
+For Main KV mode, use gpt-image2 / GPT Image 2.0. Generate the H5 landing preview first, approve its in-page KV, then create the square source from the actual image 1 KV. Fill in `{title}`, `{theme}`, and the reference-specific safe-area notes:
 
 ```text
 Execute $red-zone Main KV mode.
 
-Generate the replacement-ready KV source image first: a square 1:1 H5 header/main KV source, intended 1500 x 1500. Main title text exactly: {title}. Theme: {theme}. Keep the full KV composition, background, atmosphere, depth, and visual relationships; do not use a white background and do not make a vertical H5 long page.
+Use gpt-image2 / GPT Image 2.0. First build the H5 header/main KV directly inside the red area of the reference page. Main title text exactly: {title}. Theme: {theme}. Keep the full KV composition, background, atmosphere, depth, and visual relationships inside the H5 red area.
 
-Use the reference-specific placement constraints: {safe-area notes from inspecting the red area and overlaying UI}. Keep important title strokes, character faces, and focal props out of covered overlay zones. Preserve clear visual hierarchy and a strong focal point after the image is placed into the H5 page.
+Use the reference-specific placement constraints: {safe-area notes from inspecting the red area and overlaying UI}. Keep important title strokes, character faces, and focal props out of covered overlay zones. Preserve clear visual hierarchy and a strong focal point after the image is placed into the H5 page. The approved image 1 KV becomes the locked source of truth for image 2.
 
-Style: soft lightweight 3D, Q-version rounded exaggerated forms, high saturation but not harsh, bright cheerful palette, polished toy/clay/plastic material, soft glossy highlights, gentle shadows, crisp silhouettes, cinematic depth of field, impactful but clean composition. No extra text, no watermark, no UI buttons, no screenshot frame, no broken geometry, no distorted title characters.
+Style: Q-version rounded exaggerated forms, soft lightweight 3D, high saturation but not harsh, bright clean cheerful palette, polished toy/clay/plastic material, soft glossy highlights, gentle shadows, crisp silhouettes, cinematic depth of field, impactful but airy composition. Avoid old-fashioned, dull, muddy, gray, dark, dirty, heavy, or over-rendered styling. No extra text, no watermark, no UI buttons, no screenshot frame, no broken geometry, no distorted title characters.
 ```
 
-For the page replacement result:
+For the H5 landing preview, deliver first:
 
 ```text
-Create the red-area replacement result using the same KV source image and the same placement/crop logic. Preserve the original screenshot exactly outside all red marked areas. Remove the red markers and replace only those red areas with the KV. Do not alter text, numbers, buttons, characters, panels, tabs, background outside the red area, crop, or aspect ratio. Do not leave red markers visible.
+Create the red-area replacement result / H5 landing preview first. Preserve the original screenshot exactly outside all red marked areas. Remove the red markers and replace only those red areas with the KV. Do not alter text, numbers, buttons, characters, panels, tabs, background outside the red area, crop, or aspect ratio. Do not leave red markers visible. This approved red-area KV will be the visual source of truth for the square source image.
+```
+
+For the 1:1 KV source, deliver second:
+
+```text
+Generate or export the matching square 1:1 KV source image from the actual approved red-area KV in image 1, intended 1500 x 1500. Before prompting, inspect image 1 and explicitly lock the title treatment, character count, poses, prop relationships, background, palette, lighting, perspective, and focal hierarchy. Image 2 must be a faithful square pure-view version of image 1's KV, not a new thematic generation. It may reconstruct uncropped safe margins outside the H5 preview, but it must not change the poster idea, layout, title style, characters, props, color mood, or visual hierarchy. It must include the exact title text plus all key visible characters/props/content from the H5 preview. No blank title plaque, no titleless background, no extra text, no watermark, no UI buttons, no vertical H5 page.
 ```
 
 ## Delivery
 
 Return both images clearly labeled:
 
-- `图 1：红区替换效果图`
+- `图 1：H5落地效果图 / 红区替换效果图`
 - Default asset mode: `图 2：白底 icon/资产纯享图`
 - Main KV mode: `图 2：方形 KV 头图源图（1500 x 1500）`
+
+For Main KV mode, never return three or more visible final images. If there are failed attempts, do not present them as deliverables; mention only that they were discarded during QA if necessary.
 
 If the user prefers download-only delivery, show the generated previews or links without making extra workspace copies. If local files are intentionally saved, report their paths and final dimensions.
